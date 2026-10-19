@@ -53,6 +53,73 @@ register('get_display_transforms', () => {
   return out;
 });
 
+register('apply_display_preset', (params) => {
+  requireProject();
+  if (!Format.display_mode) fail(`Format "${Format.id}" has no display transforms.`);
+  const barItem = BarItems?.apply_display_preset;
+  if (!barItem) fail('Display presets are not available in this Blockbench environment.');
+
+  const children = typeof barItem.children === 'function' ? barItem.children() : barItem.children;
+  if (!Array.isArray(children) || !children.length) {
+    fail('No display presets found in Blockbench.');
+  }
+
+  const query = String(params.preset || '').toLowerCase().trim();
+  if (!query) fail('Pass "preset" (e.g. "item", "block", "weapon", "rod", "ground").');
+
+  const match = children.find((c: any) => {
+    const name = String(c.name || '').toLowerCase();
+    const id = String(c.id || '').toLowerCase();
+    return name.includes(query) || id.includes(query);
+  });
+
+  if (!match) {
+    const available = children.map((c: any) => `"${c.name}"`).join(', ');
+    fail(`Unknown display preset "${params.preset}". Available presets: ${available}`);
+  }
+
+  if (params.slot && displaySlots().includes(params.slot)) {
+    if (typeof DisplayMode !== 'undefined') {
+      DisplayMode.display_slot = params.slot;
+    }
+  }
+
+  const everywhere = params.everywhere !== false;
+  const subChildren = typeof match.children === 'function' ? match.children() : match.children;
+
+  if (Array.isArray(subChildren) && subChildren.length) {
+    const targetAction = everywhere
+      ? subChildren.find((x: any) => String(x.name || '').toLowerCase().includes('everywhere'))
+      : subChildren.find((x: any) => String(x.name || '').toLowerCase().includes('here'));
+
+    if (targetAction?.click) {
+      targetAction.click();
+    } else if (match.click) {
+      match.click();
+    }
+  } else if (match.click) {
+    match.click();
+  }
+
+  const out: Record<string, any> = {};
+  for (const slot of displaySlots()) {
+    const s = Project.display_settings[slot];
+    if (s) {
+      out[slot] = {
+        rotation: s.rotation.slice(),
+        translation: s.translation.slice(),
+        scale: s.scale.slice(),
+      };
+    }
+  }
+
+  return {
+    preset: match.name,
+    everywhere,
+    slots: out,
+  };
+});
+
 register('run_action', (params) => {
   if (!params.id) fail('Pass the "id" of a Blockbench action (BarItems id), e.g. "add_cube", "screenshot_model".');
   const action = BarItems[params.id];

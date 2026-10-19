@@ -5,6 +5,8 @@ import { forward } from '../respond';
 import { vec3, vec2, readOnly, mutating, cameraSchema, anglePresets, registerGroup } from './shared';
 
 export function registerDisplayTools(server: McpServer) {
+  const displaySlotEnum = z.enum(['thirdperson_righthand', 'thirdperson_lefthand', 'firstperson_righthand', 'firstperson_lefthand', 'ground', 'gui', 'head', 'fixed', 'embedded', 'on_shelf']);
+
   registerGroup(server, 'display_transforms', {
     title: 'Item display transforms',
     description: 'How a java_block/bedrock_block item model is displayed in each slot: gui, ground, head, firstperson/thirdperson left/right hand, fixed (item frame), embedded, on_shelf (shelf block).',
@@ -15,15 +17,35 @@ export function registerDisplayTools(server: McpServer) {
         command: 'set_display_transforms',
         description: 'Configure one slot. A slot that was never set starts from the game defaults on bedrock_block (Blockbench 5.2), so you can change just one value.',
         inputSchema: {
-          slot: z.enum(['thirdperson_righthand', 'thirdperson_lefthand', 'firstperson_righthand', 'firstperson_lefthand', 'ground', 'gui', 'head', 'fixed', 'embedded', 'on_shelf']),
+          slot: displaySlotEnum,
           rotation: vec3().optional(),
           translation: vec3().optional(),
           scale: vec3().optional(),
           mirror: z.array(z.boolean()).length(3).optional(),
         },
       },
+      apply_preset: {
+        command: 'apply_display_preset',
+        description: 'Apply a built-in display preset (item, block, weapon, rod, ground) across all slots or to a specific slot.',
+        inputSchema: {
+          preset: z.string().describe('Preset name: "item", "block", "weapon", "rod", "ground"'),
+          everywhere: z.boolean().optional().describe('Apply to all slots (default true) or only to the active/specified slot'),
+          slot: displaySlotEnum.optional(),
+        },
+      },
     },
   });
+
+  server.registerTool('apply_display_preset', {
+    title: 'Apply display preset',
+    description: 'Apply a built-in Blockbench display preset to the model (item, block, weapon, rod, ground). Configures the rotation, translation and scale for hand, gui, ground, fixed slots all at once.',
+    inputSchema: {
+      preset: z.string().describe('Preset name or keyword: "item", "block", "weapon", "rod", "ground"'),
+      everywhere: z.boolean().optional().describe('Apply to all slots (default true) or only to the active/specified slot'),
+      slot: displaySlotEnum.optional().describe('Target slot when everywhere is false'),
+    },
+    annotations: mutating,
+  }, forward('apply_display_preset'));
 
   server.registerTool('capture_screenshot', {
     title: 'Screenshot the model',

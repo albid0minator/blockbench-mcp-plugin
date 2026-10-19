@@ -15,7 +15,7 @@ Every change goes into Blockbench's undo history. Press `Ctrl+Z` to revert any s
 | **Blockbench** | 5.2 or later recommended. 5.1.4 also works, but 5.2-only tools return a "requires 5.2" error there. |
 | **Client** | Claude Desktop and Claude Code. Developed on Windows. |
 | **Node.js** | 18 or later |
-| **Tools** | 69 |
+| **Tools** | 70 |
 
 > **If you use version 1.6.0 or older, update.** In older versions, while Blockbench and the MCP server
 > were running, any website open in your browser could connect to the bridge and run code on your
@@ -192,7 +192,7 @@ OUT=C:/output/folder node scripts/examples/build-gunslinger.mjs
 | Reference | `compare_reference`, `project_reference` |
 | Scene | `preview_models`, `reference_images` |
 | Pixel art | `pixel_art` (render, export_sheet, presets) |
-| Display | `display_transforms` (get, set) |
+| Display | `display_transforms` (get, set, apply_preset), `apply_display_preset` |
 | Other | `run_action`, `eval_code`, `undo`, `redo` |
 
 Each tool's parameters are described in its MCP schema. Claude reads them on its own.
